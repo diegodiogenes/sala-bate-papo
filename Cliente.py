@@ -11,7 +11,7 @@ from socket import *
 
 # definicao das variaveis
 serverName = 'localhost' # ip do servidor
-serverPort = 65000 # porta a se conectar
+serverPort = 65001 # porta a se conectar
 clientSocket = socket(AF_INET,SOCK_STREAM) # criacao do socket TCP
 clientSocket.connect((serverName, serverPort)) # conecta o socket ao servidor
 message = ''

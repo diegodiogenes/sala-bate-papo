@@ -11,7 +11,7 @@ from socket import *  # sockets
 import threading
 
 """
-CONSTANTES
+CONSTANTES PARA PRINTAR COR NO TERMINAL
 """
 
 ON = '\033[42m'
@@ -23,6 +23,7 @@ FONT_WHITE = '\033[37m'
 """
 FUNÇÕES
 """
+
 
 def on_client(key, nickname):
     """
@@ -59,10 +60,34 @@ def change_nick(key, nickname):
     dict_nickname[key] = nickname.decode('utf-8')
     return CHANGE + FONT_WHITE + current_name + " alterou o nome paraa " + nickname + CLOSE
 
+
+def connect_client(conn):
+    """
+    Mantém a conexão com os clientes, recebe as mensagens e envie em broadcast
+    :param conn:
+    :return:
+    """
+    nickname = conn.recv(1024)
+    print(on_client(conn, nickname))
+    message = ''
+    while message != 'quit':
+        message = conn.recv(1024)  # recebe dados do cliente
+        if not message:
+            break
+        print(message.decode('utf-8'))
+    conn.close()
+
+
 def listener_clients():
+    """
+    aceita as conexões dos clientes
+    :return:
+    """
     while True:
         conn, addr = serverSocket.accept() #aceita as conexões dos clientes
-        
+        threading.Thread(target=connect_client, args=(conn,)).start()
+
+    serverSocket.close()  # encerra o socket do servidor
 
 # definindo dicionario para guardar ip do cliente e nickname
 dict_nickname = dict()
@@ -71,24 +96,24 @@ dict_nickname = dict()
 Configurando o servidor
 """
 serverName = ''  # ip do servidor (em branco)
-serverPort = 65000  # porta a se conectar
+serverPort = 65001  # porta a se conectar
 serverSocket = socket(AF_INET, SOCK_STREAM)  # criacao do socket TCP
 serverSocket.bind((serverName, serverPort))  # bind do ip do servidor com a porta
 serverSocket.listen(1)  # socket pronto para 'ouvir' conexoes
 print('Servidor TCP esperando conexoes na porta %d ...' % (serverPort))
+listener_clients()
 
-while 1:
-    connectionSocket, addr = serverSocket.accept()  # aceita as conexoes dos clientes
-    message = connectionSocket.recv(1024)  # recebe dados do cliente
-    print(connectionSocket.fileno())
-    print(on_client(addr, message))
-    print(dict_nickname)
-    while message != 'quit':
-        print('Cliente %s enviou: %s' % (addr, message))
-        message = connectionSocket.recv(1024)
-        if not message:
-            break
-        connectionSocket.send(message)  # envia para o cliente o texto transformado
-        # print("Lista de clientes conectados: ", str(lista_addr))
-    connectionSocket.close()  # encerra o socket com o cliente
-    serverSocket.close()  # encerra o socket do servidor
+# while 1:
+#     connectionSocket, addr = serverSocket.accept()  # aceita as conexoes dos clientes
+#     message = connectionSocket.recv(1024)  # recebe dados do cliente
+#     print(connectionSocket.fileno())
+#     print(on_client(addr, message))
+#     print(dict_nickname)
+#     while message != 'quit':
+#         print('Cliente %s enviou: %s' % (addr, message))
+#         message = connectionSocket.recv(1024)
+#         if not message:
+#             break
+#         connectionSocket.send(message)  # envia para o cliente o texto transformado
+#         # print("Lista de clientes conectados: ", str(lista_addr))
+
