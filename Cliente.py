@@ -8,21 +8,30 @@
 
 # importacao das bibliotecas
 from socket import *
+import threading
+
+CURSOR_UP_ONE = '\x1b[1A'
+ERASE_LINE = '\x1b[2K'
 
 # definicao das variaveis
 serverName = 'localhost' # ip do servidor
-serverPort = 65001 # porta a se conectar
+serverPort = 65000 # porta a se conectar
 clientSocket = socket(AF_INET,SOCK_STREAM) # criacao do socket TCP
 clientSocket.connect((serverName, serverPort)) # conecta o socket ao servidor
 message = ''
 nickname = input('Digite o seu nickname: ')
 clientSocket.send(nickname.encode('utf-8'))
 
-while message != 'quit':
-    message = input('Digite sua mensagem: ')
-    clientSocket.send(message.encode('utf-8'))
+
+def send_message():
     modifiedSentence = clientSocket.recv(1024)
-    print('O servidor (\'%s\', %d) respondeu com: %s' % (serverName, serverPort, modifiedSentence))
+    print(modifiedSentence.decode('utf-8'))
+
+
+while message != 'quit':
+    message = input()
+    clientSocket.send(message.encode('utf-8'))
+    message = threading.Thread(target=send_message).start()
 
 clientSocket.send(message.encode('utf-8'))
 clientSocket.close()

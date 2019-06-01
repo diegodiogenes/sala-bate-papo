@@ -10,15 +10,20 @@
 from socket import *  # sockets
 import threading
 
+dict_comandos = {
+
+}
+
 """
 CONSTANTES PARA PRINTAR COR NO TERMINAL
 """
 
 ON = '\033[42m'
-OUT = '\033[0;0m'
+OUT = '\033[41m'
 CLOSE = '\033[0;0m'
-CHANGE = '\033[41m'
+CHANGE = '\033[43m'
 FONT_WHITE = '\033[37m'
+FONT_BOLD = '\033[1m'
 
 """
 FUNÇÕES
@@ -46,7 +51,7 @@ def out_client(key, nickname):
     :return:
     """
     dict_nickname.pop(key, nickname)
-    return OUT + FONT_WHITE + nickname.decode('utf-8') + " acabou de deixar a sala" + CLOSE
+    return OUT + FONT_WHITE + nickname + " acabou de deixar a sala" + CLOSE
 
 
 def change_nick(key, nickname):
@@ -58,7 +63,19 @@ def change_nick(key, nickname):
     """
     current_name = dict_nickname[key]
     dict_nickname[key] = nickname.decode('utf-8')
-    return CHANGE + FONT_WHITE + current_name + " alterou o nome paraa " + nickname + CLOSE
+    return CHANGE + FONT_WHITE + current_name + " alterou o nome para " + nickname + CLOSE
+
+
+def client_says(key, message):
+    """
+    Função que recebe a chave do dicionário de nicknames e a mensagem, retorna a mensagem formatada digitada pelo cliente
+    :param key:
+    :param message:
+    :return:
+    """
+    message = message.decode('utf-8')
+    if message != 'quit':
+        return FONT_BOLD + dict_nickname[key] + ' diz: ' + CLOSE + message
 
 
 def connect_client(conn):
@@ -74,7 +91,14 @@ def connect_client(conn):
         message = conn.recv(1024)  # recebe dados do cliente
         if not message:
             break
-        print(message.decode('utf-8'))
+        if client_says(conn, message) is not None:
+            print(client_says(conn, message))
+            for client in dict_nickname:
+                if client != conn:
+                    client.send(client_says(conn, message).encode('utf-8'))
+
+    print(out_client(conn, dict_nickname[conn]))
+    print(dict_nickname)
     conn.close()
 
 
@@ -96,7 +120,7 @@ dict_nickname = dict()
 Configurando o servidor
 """
 serverName = ''  # ip do servidor (em branco)
-serverPort = 65001  # porta a se conectar
+serverPort = 65000  # porta a se conectar
 serverSocket = socket(AF_INET, SOCK_STREAM)  # criacao do socket TCP
 serverSocket.bind((serverName, serverPort))  # bind do ip do servidor com a porta
 serverSocket.listen(1)  # socket pronto para 'ouvir' conexoes
