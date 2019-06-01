@@ -101,7 +101,7 @@ serverSocket = socket(AF_INET, SOCK_STREAM)  # criacao do socket TCP
 serverSocket.bind((serverName, serverPort))  # bind do ip do servidor com a porta
 serverSocket.listen(1)  # socket pronto para 'ouvir' conexoes
 print('Servidor TCP esperando conexoes na porta %d ...' % (serverPort))
-listener_clients()
+listener_clients() # Chama função para escutar os clientes
 
 # while 1:
 #     connectionSocket, addr = serverSocket.accept()  # aceita as conexoes dos clientes
