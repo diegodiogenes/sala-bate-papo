@@ -99,15 +99,17 @@ def send_history(conn):
     conn.send(historico.encode('utf-8'))
     f.close()
 
-def client_list():
+def client_list(addr):
     '''
     Função que lista todos os clientes conectados
+    Cabe melhorias
+    1) listar Nome, ip, portas
     '''
     print('Os clientes conectados são: ')
     for client in dict_nickname:
-        print(dict_nickname[client])
+        print(dict_nickname[client] + ', de ip: '+ str(addr[0])+',na porta: '+str(addr[1]))
 
-def connect_client(conn):
+def connect_client(conn, addr):
     """
     Mantém a conexão com os clientes, recebe as mensagens e envie em broadcast
     :param conn:
@@ -129,7 +131,7 @@ def connect_client(conn):
             print(client_says(conn, message))
             write_file(client_says(conn, message))
             if message == 'listar':
-                client_list()
+                client_list(addr)
             for client in dict_nickname:
                 if client != conn:
                     client.send(client_says(conn, message).encode('utf-8'))
@@ -145,7 +147,7 @@ def listener_clients():
     """
     while True:
         conn, addr = serverSocket.accept() #aceita as conexões dos clientes
-        threading.Thread(target=connect_client, args=(conn,)).start()
+        threading.Thread(target=connect_client, args=(conn, addr,)).start()
 
     serverSocket.close()  # encerra o socket do servidor
 
