@@ -99,6 +99,13 @@ def send_history(conn):
     conn.send(historico.encode('utf-8'))
     f.close()
 
+def client_list():
+    '''
+    Função que lista todos os clientes conectados
+    '''
+    print('Os clientes conectados são: ')
+    for client in dict_nickname:
+        print(dict_nickname[client])
 
 def connect_client(conn):
     """
@@ -121,6 +128,8 @@ def connect_client(conn):
         if client_says(conn, message) is not None:
             print(client_says(conn, message))
             write_file(client_says(conn, message))
+            if message == 'listar':
+                client_list()
             for client in dict_nickname:
                 if client != conn:
                     client.send(client_says(conn, message).encode('utf-8'))
