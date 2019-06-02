@@ -38,8 +38,9 @@ def on_client(key, nickname):
     :param nickname:
     :return:
     """
+    information_on_client = ON + FONT_WHITE + nickname.decode('utf-8') + ' acabou de entrar na sala' + CLOSE
     dict_nickname[key] = nickname.decode('utf-8')
-    return ON + FONT_WHITE + nickname.decode('utf-8') + ' acabou de entrar na sala' + CLOSE
+    return information_on_client
 
 
 def out_client(key, nickname):
@@ -51,7 +52,11 @@ def out_client(key, nickname):
     :return:
     """
     dict_nickname.pop(key, nickname)
-    return OUT + FONT_WHITE + nickname + " acabou de deixar a sala" + CLOSE
+    information_client_out = OUT + FONT_WHITE + nickname + " acabou de deixar a sala" + CLOSE
+    for client in dict_nickname:
+        if client != key:
+            client.send(information_client_out.encode('utf-8'))
+    return information_client_out
 
 
 def change_nick(key, nickname):
@@ -73,9 +78,26 @@ def client_says(key, message):
     :param message:
     :return:
     """
-    message = message.decode('utf-8')
     if message != 'quit':
         return FONT_BOLD + dict_nickname[key] + ' diz: ' + CLOSE + message
+
+
+def write_file(message):
+    """
+    Função que tem objetivo de gravar no arquivo historico.txt que registra o historico da conversa do bate-papo
+    :param message:
+    :return:
+    """
+    f = open('historico.txt', 'a')
+    f.write(message + '\n')
+    f.close()
+
+
+def send_history(conn):
+    f = open('historico.txt', 'r')
+    historico = f.read()
+    conn.send(historico.encode('utf-8'))
+    f.close()
 
 
 def connect_client(conn):
@@ -86,19 +108,24 @@ def connect_client(conn):
     """
     nickname = conn.recv(1024)
     print(on_client(conn, nickname))
+    for client in dict_nickname:
+        if client != conn:
+            client.send(on_client(conn, nickname).encode('utf-8'))
+    send_history(conn)
+    write_file(on_client(conn, nickname))
     message = ''
     while message != 'quit':
-        message = conn.recv(1024)  # recebe dados do cliente
+        message = conn.recv(1024).decode('utf-8')  # recebe dados do cliente
         if not message:
             break
         if client_says(conn, message) is not None:
             print(client_says(conn, message))
+            write_file(client_says(conn, message))
             for client in dict_nickname:
                 if client != conn:
                     client.send(client_says(conn, message).encode('utf-8'))
 
     print(out_client(conn, dict_nickname[conn]))
-    print(dict_nickname)
     conn.close()
 
 
@@ -113,6 +140,7 @@ def listener_clients():
 
     serverSocket.close()  # encerra o socket do servidor
 
+
 # definindo dicionario para guardar ip do cliente e nickname
 dict_nickname = dict()
 
@@ -120,12 +148,15 @@ dict_nickname = dict()
 Configurando o servidor
 """
 serverName = ''  # ip do servidor (em branco)
-serverPort = 65000  # porta a se conectar
+serverPort = 65001  # porta a se conectar
 serverSocket = socket(AF_INET, SOCK_STREAM)  # criacao do socket TCP
 serverSocket.bind((serverName, serverPort))  # bind do ip do servidor com a porta
 serverSocket.listen(1)  # socket pronto para 'ouvir' conexoes
 print('Servidor TCP esperando conexoes na porta %d ...' % (serverPort))
-listener_clients() # Chama função para escutar os clientes
+file = open('historico.txt', 'w')
+file.write('')
+file.close()
+listener_clients()  # Chama função para escutar os clientes
 
 # while 1:
 #     connectionSocket, addr = serverSocket.accept()  # aceita as conexoes dos clientes

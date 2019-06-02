@@ -15,7 +15,7 @@ ERASE_LINE = '\x1b[2K'
 
 # definicao das variaveis
 serverName = 'localhost' # ip do servidor
-serverPort = 65000 # porta a se conectar
+serverPort = 65001  # porta a se conectar
 clientSocket = socket(AF_INET,SOCK_STREAM) # criacao do socket TCP
 clientSocket.connect((serverName, serverPort)) # conecta o socket ao servidor
 message = ''
@@ -23,15 +23,18 @@ nickname = input('Digite o seu nickname: ')
 clientSocket.send(nickname.encode('utf-8'))
 
 
-def send_message():
-    modifiedSentence = clientSocket.recv(1024)
-    print(modifiedSentence.decode('utf-8'))
+def send_message(message):
+    while message != 'quit':
+        modifiedSentence = clientSocket.recv(1024)
+        print(modifiedSentence.decode('utf-8'))
+    return 0
 
 
 while message != 'quit':
-    message = input()
     clientSocket.send(message.encode('utf-8'))
-    message = threading.Thread(target=send_message).start()
+    threading.Thread(target=send_message, args=(message,)).start()
+    message = input()
+
 
 clientSocket.send(message.encode('utf-8'))
 clientSocket.close()
