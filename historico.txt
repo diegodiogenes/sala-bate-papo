@@ -1,5 +1,3 @@
-[42m[37mDouglas acabou de entrar na sala[0;0m
-[42m[37mDiego acabou de entrar na sala[0;0m
-[1mDouglas diz: [0;0mlistar
-[42m[37mDouglas acabou de entrar na sala[0;0m
-[42m[37mDiego acabou de entrar na sala[0;0m
+[42m[37mdoug acabou de entrar na sala[0;0m
+[42m[37mken acabou de entrar na sala[0;0m
+[1mken diz: [0;0mlistar

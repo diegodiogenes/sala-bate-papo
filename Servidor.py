@@ -99,15 +99,37 @@ def send_history(conn):
     conn.send(historico.encode('utf-8'))
     f.close()
 
-def client_list(addr):
+def pvd(message):
+    nick_comunica = message.split()
+    nick_comunica = nick_comunica[1]
+    
+    for client in dict_nickname:
+        if dict_nickname[client] == nick_comunica:
+            string = "quer falar com você em pvd"
+            client.send(string.encode('utf-8'))
+            
+    return nick_comunica
+
+def atualiza_lista(nickname):
+    '''
+    Função para dizer que o cliente em questao está em 
+    '''
+    for client in dict_nickname:
+        if dict_nickname[client] == nickname:
+            dict_nickname[client] = dict_nickname[client]+'(privado)' 
+        
+
+def client_list(conn, addr):
     '''
     Função que lista todos os clientes conectados
     Cabe melhorias
     1) listar Nome, ip, portas
     '''
-    print('Os clientes conectados são: ')
+    string = 'Os clientes conectados são: '
+    conn.send(string.encode('utf-8'))
     for client in dict_nickname:
-        print(dict_nickname[client] + ', de ip: '+ str(addr[0])+',na porta: '+str(addr[1]))
+        client_list = dict_nickname[client] + ', de ip: '+ str(addr[0])+' na porta: '+str(addr[1])+'\n'
+        conn.send(client_list.encode('utf-8'))
 
 def connect_client(conn, addr):
     """
@@ -116,6 +138,7 @@ def connect_client(conn, addr):
     :return:
     """
     nickname = conn.recv(1024)
+    print('Nickname é: '+str(nickname))
     print(on_client(conn, nickname))
     for client in dict_nickname:
         if client != conn:
@@ -131,7 +154,24 @@ def connect_client(conn, addr):
             print(client_says(conn, message))
             write_file(client_says(conn, message))
             if message == 'listar':
-                client_list(addr)
+                client_list(conn, addr)
+                
+            if message.split()[0] == 'pvd':
+                nick_comunica = pvd(message) #devolve o nome de com quem quer se comunicar
+                mode_pvd = True
+                atualiza_lista(nickname)
+                
+                print('Modo Privado ativado entre '+str(nickname)+' e '+nick_comunica)
+                while mode_pvd != False:
+                    message = conn.recv(1024).decode('utf-8')  # recebe dados do cliente
+                    if not message:
+                        break
+                    if message == 'sair_pvd':
+                        mode_pvd = False
+                    for client in dict_nickname: 
+                        if dict_nickname[client] == nick_comunica:
+                            client.send(message.encode('utf-8'))
+                    
             for client in dict_nickname:
                 if client != conn:
                     client.send(client_says(conn, message).encode('utf-8'))
@@ -159,7 +199,7 @@ dict_nickname = dict()
 Configurando o servidor
 """
 serverName = ''  # ip do servidor (em branco)
-serverPort = 65001  # porta a se conectar
+serverPort = 65000  # porta a se conectar
 serverSocket = socket(AF_INET, SOCK_STREAM)  # criacao do socket TCP
 serverSocket.bind((serverName, serverPort))  # bind do ip do servidor com a porta
 serverSocket.listen(1)  # socket pronto para 'ouvir' conexoes
