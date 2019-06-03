@@ -78,7 +78,7 @@ def client_says(key, message):
     :param message:
     :return:
     """
-    if message != 'quit':
+    if message != 'exit()':
         return FONT_BOLD + dict_nickname[key] + ' diz: ' + CLOSE + message
 
 
@@ -114,7 +114,7 @@ def connect_client(conn):
     send_history(conn)
     write_file(on_client(conn, nickname))
     message = ''
-    while message != 'quit':
+    while message != 'exit()':
         message = conn.recv(1024).decode('utf-8')  # recebe dados do cliente
         if not message:
             break
@@ -125,7 +125,9 @@ def connect_client(conn):
                 if client != conn:
                     client.send(client_says(conn, message).encode('utf-8'))
 
-    print(out_client(conn, dict_nickname[conn]))
+    client_disconnect = out_client(conn, dict_nickname[conn])
+    write_file(client_disconnect)
+    print(client_disconnect)
     conn.close()
 
 
@@ -141,14 +143,17 @@ def listener_clients():
     serverSocket.close()  # encerra o socket do servidor
 
 
-# definindo dicionario para guardar ip do cliente e nickname
+# definindo dicionario para guardar informações do socket do cliente e nickname
 dict_nickname = dict()
+
+# definindo dicionario para guardar ip/porta do cliente e nickname
+dict_ip_nickname = dict()
 
 """
 Configurando o servidor
 """
 serverName = ''  # ip do servidor (em branco)
-serverPort = 65001  # porta a se conectar
+serverPort = 65000  # porta a se conectar
 serverSocket = socket(AF_INET, SOCK_STREAM)  # criacao do socket TCP
 serverSocket.bind((serverName, serverPort))  # bind do ip do servidor com a porta
 serverSocket.listen(1)  # socket pronto para 'ouvir' conexoes

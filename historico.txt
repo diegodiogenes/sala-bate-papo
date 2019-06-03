@@ -1,5 +1,2 @@
-[42m[37mdigo acabou de entrar na sala[0;0m
-[42m[37mto acabou de entrar na sala[0;0m
-[1mto diz: [0;0mfalae
-[1mdigo diz: [0;0mbeleza/
-[42m[37maralto acabou de entrar na sala[0;0m
+[42m[37mDiego    acabou de entrar na sala[0;0m
+[41m[37mDiego    acabou de deixar a sala[0;0m
