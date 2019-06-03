@@ -1,2 +1,3 @@
-[42m[37mDiego    acabou de entrar na sala[0;0m
-[41m[37mDiego    acabou de deixar a sala[0;0m
+[42m[37mDiego acabou de entrar na sala[0;0m
+[42m[37mDouglas acabou de entrar na sala[0;0m
+[45m[37mDiego alterou o nome para teste[0;0m

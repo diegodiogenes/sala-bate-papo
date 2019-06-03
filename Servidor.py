@@ -3,16 +3,29 @@
 # DISCIPLINA REDES DE COMPUTADORES (DCA0113)
 # AUTOR: DIEGO BRUNO DANTAS DIÓGENES
 #        DOUGLAS DE SOUZA CARVALHO
-# SCRIPT: Servidor de sockets TCP modificado para receber texto minusculo do cliente enviar resposta em maiuscula
+# SCRIPT: Servidor de sockets TCP modificado para criação de um bate-papo, recebe mensagens, envia em broadcast e gerencia conexões
 #
 
 # importacao das bibliotecas
 from socket import *  # sockets
 import threading
+import pickle
 
-dict_comandos = {
 
-}
+class Commands:
+    PUBLIC = 0
+    PRIVATE = 1
+    NAME = 2
+    LIST = 3
+    EXIT = 4
+
+
+class Const:
+    SIZE_HEADER = 99
+    SIZE_NICK = 8
+    SIZE_COMMAND = 8
+    SIZE_MESSAGE = 80
+
 
 """
 CONSTANTES PARA PRINTAR COR NO TERMINAL
@@ -21,7 +34,7 @@ CONSTANTES PARA PRINTAR COR NO TERMINAL
 ON = '\033[42m'
 OUT = '\033[41m'
 CLOSE = '\033[0;0m'
-CHANGE = '\033[43m'
+CHANGE = '\033[45m'
 FONT_WHITE = '\033[37m'
 FONT_BOLD = '\033[1m'
 
@@ -67,7 +80,7 @@ def change_nick(key, nickname):
     :return:
     """
     current_name = dict_nickname[key]
-    dict_nickname[key] = nickname.decode('utf-8')
+    dict_nickname[key] = nickname
     return CHANGE + FONT_WHITE + current_name + " alterou o nome para " + nickname + CLOSE
 
 
@@ -78,8 +91,65 @@ def client_says(key, message):
     :param message:
     :return:
     """
-    if message != 'exit()':
+    if message != 'sair':
         return FONT_BOLD + dict_nickname[key] + ' diz: ' + CLOSE + message
+
+
+def client_list(conn, addr):
+    """
+    Função que lista todos os clientes conectados
+    Cabe melhorias
+    1) listar Nome, ip, portas
+    """
+    string = 'Os clientes conectados são: \n'
+    conn.send(string.encode('utf-8'))
+    for client in dict_nickname:
+        client_list = dict_nickname[client] + ', de ip: ' + str(addr[0]) + ' na porta: ' + str(addr[1]) + '\n'
+        conn.send(client_list.encode('utf-8'))
+
+
+def exit_connection(conn):
+    client_disconnect = out_client(conn, dict_nickname[conn])
+    write_file(client_disconnect)
+    print(client_disconnect)
+
+
+def send_broadcast(conn, message):
+    for client in dict_nickname:
+        if client != conn:
+            client.send(client_says(conn, message).encode('utf-8'))
+
+
+def validation_header(header, conn, addr, nickname):
+    """
+    Função que recebe o cabeçalho e irá verificar o comando digitado pelo cliente
+    :param header:
+    :param conn:
+    :param addr:
+    :param nickname:
+    :return:
+    """
+    command = header['command']
+
+    if command == Commands.LIST:
+        client_list(conn, addr)
+    elif command == Commands.NAME:
+        nick_changed = change_nick(conn, header['data'])
+        print(nick_changed)
+        write_file(nick_changed)
+        for client in dict_nickname:
+            if client != conn:
+                client.send(nick_changed.encode('utf-8'))
+    elif command == Commands.EXIT:
+        exit_connection(conn)
+    elif command == Commands.PRIVATE:
+        print("Comando ainda não implementado")
+    else:
+        if client_says(conn, header['data']) is not None:
+            message_broadcast = client_says(conn, header['data'])
+            print(message_broadcast)
+            write_file(message_broadcast)
+            send_broadcast(conn, header['data'])
 
 
 def write_file(message):
@@ -100,7 +170,7 @@ def send_history(conn):
     f.close()
 
 
-def connect_client(conn):
+def connect_client(conn, addr):
     """
     Mantém a conexão com os clientes, recebe as mensagens e envie em broadcast
     :param conn:
@@ -113,21 +183,14 @@ def connect_client(conn):
             client.send(on_client(conn, nickname).encode('utf-8'))
     send_history(conn)
     write_file(on_client(conn, nickname))
-    message = ''
-    while message != 'exit()':
-        message = conn.recv(1024).decode('utf-8')  # recebe dados do cliente
+    message = {'command': '', 'data': ''}
+    while message['command'] != Commands.EXIT:
+        message = conn.recv(1024)  # recebe dados do cliente
+        message = pickle.loads(message)
         if not message:
             break
-        if client_says(conn, message) is not None:
-            print(client_says(conn, message))
-            write_file(client_says(conn, message))
-            for client in dict_nickname:
-                if client != conn:
-                    client.send(client_says(conn, message).encode('utf-8'))
+        validation_header(message, conn, addr, nickname)
 
-    client_disconnect = out_client(conn, dict_nickname[conn])
-    write_file(client_disconnect)
-    print(client_disconnect)
     conn.close()
 
 
@@ -137,8 +200,8 @@ def listener_clients():
     :return:
     """
     while True:
-        conn, addr = serverSocket.accept() #aceita as conexões dos clientes
-        threading.Thread(target=connect_client, args=(conn,)).start()
+        conn, addr = serverSocket.accept()  # aceita as conexões dos clientes
+        threading.Thread(target=connect_client, args=(conn, addr,)).start()
 
     serverSocket.close()  # encerra o socket do servidor
 
@@ -162,18 +225,3 @@ file = open('historico.txt', 'w')
 file.write('')
 file.close()
 listener_clients()  # Chama função para escutar os clientes
-
-# while 1:
-#     connectionSocket, addr = serverSocket.accept()  # aceita as conexoes dos clientes
-#     message = connectionSocket.recv(1024)  # recebe dados do cliente
-#     print(connectionSocket.fileno())
-#     print(on_client(addr, message))
-#     print(dict_nickname)
-#     while message != 'quit':
-#         print('Cliente %s enviou: %s' % (addr, message))
-#         message = connectionSocket.recv(1024)
-#         if not message:
-#             break
-#         connectionSocket.send(message)  # envia para o cliente o texto transformado
-#         # print("Lista de clientes conectados: ", str(lista_addr))
-
